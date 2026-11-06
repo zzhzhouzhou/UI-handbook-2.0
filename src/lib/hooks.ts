@@ -1,10 +1,107 @@
-import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
-/** ItemCard 提供：demo 是否在视口附近。离屏时动画循环应暂停 */
-export const VisibleCtx = createContext(true);
-export const useVisible = () => useContext(VisibleCtx);
+/* ---------- theme ---------- */
+const subs = new Set<() => void>();
+let dark = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
 
-export function useLocalStorage<T>(key: string, init: T): [T, (v: T | ((p: T) => T)) => void] {
+export function useDark() {
+  return useSyncExternalStore(
+    (cb) => {
+      subs.add(cb);
+      return () => subs.delete(cb);
+    },
+    () => dark,
+    () => false
+  );
+}
+
+export function setDark(next: boolean, origin?: { x: number; y: number }) {
+  const apply = () => {
+    dark = next;
+    document.documentElement.classList.toggle("dark", next);
+    try {
+      localStorage.setItem("hb-theme", next ? "dark" : "light");
+    } catch {}
+    subs.forEach((f) => f());
+  };
+  const doc = document as any;
+  if (!doc.startViewTransition || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    apply();
+    return;
+  }
+  const x = origin?.x ?? window.innerWidth / 2;
+  const y = origin?.y ?? 0;
+  const r = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+  const t = doc.startViewTransition(apply);
+  t.ready.then(() => {
+    document.documentElement.animate(
+      { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${r}px at ${x}px ${y}px)`] },
+      { duration: 650, easing: "cubic-bezier(.4,0,.2,1)", pseudoElement: "::view-transition-new(root)" }
+    );
+  });
+}
+
+export function toggleTheme(e?: { clientX: number; clientY: number }) {
+  setDark(!dark, e ? { x: e.clientX, y: e.clientY } : undefined);
+}
+
+export function cssVar(name: string) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+/* ---------- misc hooks ---------- */
+export function useInView<T extends Element>(opts: { margin?: string; once?: boolean } = {}) {
+  const ref = useRef<T>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) {
+          setInView(true);
+          if (opts.once) io.disconnect();
+        } else if (!opts.once) setInView(false);
+      },
+      { rootMargin: opts.margin ?? "0px" }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [opts.margin, opts.once]);
+  return [ref, inView] as const;
+}
+
+export async function copyText(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand("copy");
+    } catch {}
+    ta.remove();
+  }
+}
+
+export function useCopy(timeout = 1400) {
+  const [done, setDone] = useState(false);
+  const t = useRef<number>(0);
+  const copy = useCallback(
+    (text: string) => {
+      copyText(text);
+      setDone(true);
+      clearTimeout(t.current);
+      t.current = window.setTimeout(() => setDone(false), timeout);
+    },
+    [timeout]
+  );
+  return [done, copy] as const;
+}
+
+export function useLocal<T>(key: string, init: T) {
   const [v, setV] = useState<T>(() => {
     try {
       const s = localStorage.getItem(key);
@@ -16,154 +113,39 @@ export function useLocalStorage<T>(key: string, init: T): [T, (v: T | ((p: T) =>
   useEffect(() => {
     try {
       localStorage.setItem(key, JSON.stringify(v));
-    } catch {
-      /* ignore */
-    }
+    } catch {}
   }, [key, v]);
-  return [v, setV];
+  return [v, setV] as const;
 }
 
-/** 元素进入视口（含 margin）后返回 true，默认只触发一次 */
-export function useInView<T extends Element>(margin = "500px", once = true): [RefObject<T | null>, boolean] {
-  const ref = useRef<T | null>(null);
-  const [seen, setSeen] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (typeof IntersectionObserver === "undefined") {
-      setSeen(true);
-      return;
-    }
-    const io = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) {
-          setSeen(true);
-          if (once) io.disconnect();
-        } else if (!once) setSeen(false);
-      },
-      { rootMargin: margin }
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [margin, once]);
-  return [ref, seen];
-}
-
-export function useInterval(cb: () => void, delay: number | null) {
-  const saved = useRef(cb);
-  useLayoutEffect(() => {
-    saved.current = cb;
-  });
-  useEffect(() => {
-    if (delay === null) return;
-    const id = setInterval(() => saved.current(), delay);
-    return () => clearInterval(id);
-  }, [delay]);
-}
-
-/** requestAnimationFrame 循环，cb(dt 毫秒, t 毫秒) */
-export function useRaf(cb: (dt: number, t: number) => void, active = true) {
-  const vis = useVisible();
-  active = active && vis;
-  const saved = useRef(cb);
-  useLayoutEffect(() => {
-    saved.current = cb;
-  });
+export function useClickOutside<T extends HTMLElement>(cb: () => void, active = true) {
+  const ref = useRef<T>(null);
   useEffect(() => {
     if (!active) return;
-    let id = 0;
-    let last = performance.now();
-    const loop = (t: number) => {
-      saved.current(Math.min(t - last, 50), t);
-      last = t;
-      id = requestAnimationFrame(loop);
+    const h = (e: MouseEvent) => {
+      const t = e.target as Node;
+      // 浮层用 Portal 挂在 body 下，不在锚点 ref 内；点击浮层内部不应算「点击外部」
+      if (ref.current && !ref.current.contains(t) && !(t instanceof Element && t.closest("[data-floating]"))) cb();
     };
-    id = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(id);
-  }, [active]);
-}
-
-export function useSize<T extends HTMLElement>(): [RefObject<T | null>, { w: number; h: number }] {
-  const ref = useRef<T | null>(null);
-  const [s, setS] = useState({ w: 0, h: 0 });
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => setS({ w: el.clientWidth, h: el.clientHeight }));
-    ro.observe(el);
-    setS({ w: el.clientWidth, h: el.clientHeight });
-    return () => ro.disconnect();
-  }, []);
-  return [ref, s];
-}
-
-export function useClickOutside(ref: RefObject<HTMLElement | null>, fn: () => void, active = true) {
-  const saved = useRef(fn);
-  useLayoutEffect(() => {
-    saved.current = fn;
-  });
-  useEffect(() => {
-    if (!active) return;
-    const h = (e: MouseEvent | TouchEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) saved.current();
-    };
+    const k = (e: KeyboardEvent) => e.key === "Escape" && cb();
     document.addEventListener("mousedown", h);
-    document.addEventListener("touchstart", h);
+    document.addEventListener("keydown", k);
     return () => {
       document.removeEventListener("mousedown", h);
-      document.removeEventListener("touchstart", h);
+      document.removeEventListener("keydown", k);
     };
-  }, [ref, active]);
+  }, [cb, active]);
+  return ref;
 }
 
-export function useKey(key: string, fn: (e: KeyboardEvent) => void, active = true) {
-  const saved = useRef(fn);
-  useLayoutEffect(() => {
-    saved.current = fn;
-  });
+export function useInterval(cb: () => void, ms: number | null) {
+  const saved = useRef(cb);
+  saved.current = cb;
   useEffect(() => {
-    if (!active) return;
-    const h = (e: KeyboardEvent) => {
-      if (e.key === key) saved.current(e);
-    };
-    window.addEventListener("keydown", h);
-    return () => window.removeEventListener("keydown", h);
-  }, [key, active]);
-}
-
-export function useMedia(q: string) {
-  const [m, setM] = useState(() => (typeof window !== "undefined" ? window.matchMedia(q).matches : false));
-  useEffect(() => {
-    const mq = window.matchMedia(q);
-    const h = () => setM(mq.matches);
-    mq.addEventListener("change", h);
-    h();
-    return () => mq.removeEventListener("change", h);
-  }, [q]);
-  return m;
-}
-
-export function useCopy() {
-  const [copied, setCopied] = useState(false);
-  const copy = useCallback(async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      try {
-        document.execCommand("copy");
-      } catch {
-        /* ignore */
-      }
-      ta.remove();
-    }
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  }, []);
-  return { copied, copy };
+    if (ms == null) return;
+    const id = setInterval(() => saved.current(), ms);
+    return () => clearInterval(id);
+  }, [ms]);
 }
 
 export const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));

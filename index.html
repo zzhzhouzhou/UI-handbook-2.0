@@ -3,19 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="形色场 UI Handbook 2.0 —— 从设计令牌到高级交互的可交互组件手册：180+ 组件、设计实验室、游戏与彩蛋，React + Tailwind CSS 手写实现。" />
+    <meta name="description" content="形色场 UI Handbook —— 以 UI 设计为主、兼顾艺术设计的黑白灰交互式设计手册。" />
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#09090b" />
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236d4aff'/%3E%3Crect x='7' y='7' width='8' height='8' rx='2' fill='%23fff'/%3E%3Crect x='17' y='7' width='8' height='8' rx='2' fill='%23fff' opacity='.45'/%3E%3Crect x='7' y='17' width='8' height='8' rx='2' fill='%23fff' opacity='.45'/%3E%3Crect x='17' y='17' width='8' height='8' rx='2' fill='%23fff'/%3E%3C/svg%3E" />
-    <title>形色场 UI Handbook 2.0 · 可交互的组件手册与设计实验室</title>
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0a0a0a" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a0a0a'/%3E%3Crect x='7' y='7' width='8' height='8' rx='2' fill='%23fff'/%3E%3Crect x='17' y='7' width='8' height='8' rx='2' fill='%23fff' opacity='.4'/%3E%3Crect x='7' y='17' width='8' height='8' rx='2' fill='%23fff' opacity='.4'/%3E%3Crect x='17' y='17' width='8' height='8' rx='2' fill='%23fff'/%3E%3C/svg%3E"
+    />
+    <title>形色场 · UI 设计手册 — 黑白灰的交互式设计系统</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Noto+Serif+SC:wght@500;700&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
     <script>
       (function () {
         try {
           var t = localStorage.getItem("hb-theme");
-          t = t ? JSON.parse(t) : null;
           var d = t ? t === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
           if (d) document.documentElement.classList.add("dark");
         } catch (e) {}
