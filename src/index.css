@@ -1,0 +1,209 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: var(--ff-sans);
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --radius-md: calc(0.375rem * var(--rs, 1));
+  --radius-lg: calc(0.5rem * var(--rs, 1));
+  --radius-xl: calc(0.75rem * var(--rs, 1));
+  --radius-2xl: calc(1rem * var(--rs, 1));
+  --radius-3xl: calc(1.5rem * var(--rs, 1));
+}
+
+@theme inline {
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+}
+
+:root {
+  --ff-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --accent-h: 268;
+  --accent: oklch(0.56 0.23 var(--accent-h));
+  --accent-fg: #ffffff;
+  --accent-soft: oklch(0.96 0.035 var(--accent-h));
+  --rs: 1;
+}
+.dark {
+  --accent: oklch(0.73 0.17 var(--accent-h));
+  --accent-fg: oklch(0.18 0.05 var(--accent-h));
+  --accent-soft: oklch(0.32 0.08 var(--accent-h) / 0.45);
+  color-scheme: dark;
+}
+
+html {
+  color-scheme: light;
+  scroll-padding-top: 80px;
+  scroll-behavior: smooth;
+}
+body {
+  background: #fff;
+  color: var(--color-zinc-900);
+  font-family: var(--ff-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv11", "ss01";
+}
+.dark body {
+  background: var(--color-zinc-950);
+  color: var(--color-zinc-100);
+}
+::selection {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d4d4d8 transparent;
+}
+.dark * {
+  scrollbar-color: #3f3f46 transparent;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+pre,
+code,
+kbd {
+  font-family: var(--font-mono);
+}
+
+/* ---------- 背景纹理 ---------- */
+.bg-dots {
+  background-image: radial-gradient(circle, rgb(0 0 0 / 0.11) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+.dark .bg-dots {
+  background-image: radial-gradient(circle, rgb(255 255 255 / 0.1) 1px, transparent 1px);
+}
+.bg-grid {
+  background-image: linear-gradient(90deg, rgb(0 0 0 / 0.05) 1px, transparent 1px),
+    linear-gradient(rgb(0 0 0 / 0.05) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.dark .bg-grid {
+  background-image: linear-gradient(90deg, rgb(255 255 255 / 0.06) 1px, transparent 1px),
+    linear-gradient(rgb(255 255 255 / 0.06) 1px, transparent 1px);
+}
+.noise::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.3;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+.dark .noise::after {
+  mix-blend-mode: screen;
+  opacity: 0.1;
+}
+.text-gradient {
+  background: linear-gradient(100deg, var(--accent), oklch(0.7 0.2 calc(var(--accent-h) + 70)), var(--accent));
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradientShift 6s linear infinite;
+}
+.skeleton {
+  background-color: var(--color-zinc-200);
+  background-image: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.6), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+.dark .skeleton {
+  background-color: var(--color-zinc-800);
+  background-image: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.07), transparent);
+}
+.glass {
+  background: rgb(255 255 255 / 0.55);
+  backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid rgb(255 255 255 / 0.5);
+}
+.dark .glass {
+  background: rgb(24 24 27 / 0.55);
+  border-color: rgb(255 255 255 / 0.08);
+}
+
+/* ---------- 动画 ---------- */
+@keyframes shimmer { 0% { background-position: -200% 0 } 100% { background-position: 200% 0 } }
+@keyframes gradientShift { to { background-position: 200% center } }
+@keyframes float { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-10px) } }
+@keyframes marquee { to { transform: translateX(-50%) } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px) } to { opacity: 1; transform: none } }
+@keyframes scaleIn { from { opacity: 0; transform: scale(0.96) } to { opacity: 1; transform: none } }
+@keyframes slideInRight { from { transform: translateX(100%) } to { transform: none } }
+@keyframes slideInLeft { from { transform: translateX(-100%) } to { transform: none } }
+@keyframes slideUp { from { transform: translateY(100%) } to { transform: none } }
+@keyframes caret { 0%, 100% { opacity: 1 } 50% { opacity: 0 } }
+@keyframes dot { 0%, 80%, 100% { opacity: 0.35; transform: scale(0.6) } 40% { opacity: 1; transform: scale(1) } }
+@keyframes ripple { from { opacity: 0.35; transform: scale(0) } to { opacity: 0; transform: scale(4) } }
+@keyframes spinSlow { to { transform: rotate(360deg) } }
+@keyframes blob { 0%, 100% { border-radius: 42% 58% 70% 30% / 45% 45% 55% 55% } 33% { border-radius: 70% 30% 46% 54% / 30% 29% 71% 70% } 66% { border-radius: 30% 70% 38% 62% / 62% 60% 40% 38% } }
+@keyframes aurora { 0% { transform: translate(0, 0) scale(1) } 33% { transform: translate(8%, -6%) scale(1.15) } 66% { transform: translate(-6%, 7%) scale(0.95) } 100% { transform: translate(0, 0) scale(1) } }
+@keyframes beam { to { offset-distance: 100% } }
+@keyframes meteor { 0% { transform: rotate(215deg) translateX(0); opacity: 1 } 70% { opacity: 1 } 100% { transform: rotate(215deg) translateX(-520px); opacity: 0 } }
+@keyframes glitch1 { 0%, 100% { clip-path: inset(0 0 85% 0); transform: translate(-3px, 0) } 25% { clip-path: inset(40% 0 40% 0); transform: translate(3px, 0) } 50% { clip-path: inset(80% 0 2% 0); transform: translate(-2px, 0) } 75% { clip-path: inset(15% 0 60% 0); transform: translate(2px, 0) } }
+@keyframes glitch2 { 0%, 100% { clip-path: inset(60% 0 10% 0); transform: translate(3px, 0) } 25% { clip-path: inset(10% 0 70% 0); transform: translate(-3px, 0) } 50% { clip-path: inset(30% 0 45% 0); transform: translate(2px, 0) } 75% { clip-path: inset(70% 0 5% 0); transform: translate(-2px, 0) } }
+@keyframes wave { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-10px) } }
+@keyframes bar { 0%, 100% { transform: scaleY(0.25) } 50% { transform: scaleY(1) } }
+@keyframes draw { to { stroke-dashoffset: 0 } }
+@keyframes pop { 0% { transform: scale(1) } 40% { transform: scale(1.35) } 100% { transform: scale(1) } }
+@keyframes shake { 0%, 100% { transform: translateX(0) } 20%, 60% { transform: translateX(-6px) } 40%, 80% { transform: translateX(6px) } }
+@keyframes holo { 0% { background-position: 0% 50% } 100% { background-position: 200% 50% } }
+@keyframes reveal { from { clip-path: circle(0px at var(--px) var(--py)) } to { clip-path: circle(900px at var(--px) var(--py)) } }
+
+.anim-fade-up { animation-name: fadeUp; animation-duration: 0.5s; animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); animation-fill-mode: both; }
+.anim-scale-in { animation-name: scaleIn; animation-duration: 0.2s; animation-timing-function: ease-out; animation-fill-mode: both; }
+.anim-float { animation-name: float; animation-duration: 5s; animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+.anim-shake { animation-name: shake; animation-duration: 0.4s; animation-timing-function: ease; }
+.anim-pop { animation-name: pop; animation-duration: 0.35s; animation-timing-function: ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, ::before, ::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) { z-index: 1; }
+::view-transition-new(root) { z-index: 2; }
+
+/* 自定义范围滑块 */
+input[type="range"].rng {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--color-zinc-200);
+  outline: none;
+}
+.dark input[type="range"].rng { background: var(--color-zinc-800); }
+input[type="range"].rng::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
+  cursor: pointer;
+}
+input[type="range"].rng::-moz-range-thumb {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--accent); border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.3); cursor: pointer;
+}
+input[type="range"].rng:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent) 30%, transparent); }
